@@ -1,0 +1,31 @@
+# MacOS & VS Code
+.DS_Store
+.vscode/
+
+# Python
+server/venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
+.eggs/
+*.egg_info/
+
+# ENV & local config
+*.env
+.env
+server/.env
+client/.env
+
+# SQLite & local data
+*.db
+server/jobs.db
+
+# Node / Vite
+client/node_modules/
+client/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
