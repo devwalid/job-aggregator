@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from typing import List, Optional
 from datetime import datetime
 
@@ -29,6 +29,17 @@ def list_jobs(
             (models.Job.company.ilike(like)) |
             (models.Job.location.ilike(like))
         )
+    if q:
+        terms = [t.strip() for t in q.split() if t.strip()]
+        for term in terms:
+            like = f"%{term}%"
+            query = query.filter(
+                or_(
+                    models.Job.title.ilike(like),
+                    models.Job.company.ilike(like),
+                    models.Job.company.ilike(like),
+                )
+            )
     if source:
         query = query.filter(models.Job.source == source)
     if status:
