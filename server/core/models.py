@@ -13,5 +13,5 @@ class Job(Base):
     location = Column(String, nullable=True, index=True)
     url = Column(String)
     posted_at = Column(DateTime, nullable=True, index=True)
-    fetched_at = Column(DateTime, server_default=func.now(), index=True)
+    fetched_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), index=True)
     status = Column(String, default="NEW", index=True)

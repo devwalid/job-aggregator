@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, func
 from typing import List, Optional
 from datetime import datetime
 
@@ -23,13 +23,6 @@ def list_jobs(
     query = db.query(models.Job)
 
     if q:
-        like = f"%{q}"
-        query = query.filter(
-            (models.Job.title.ilike(like)) |
-            (models.Job.company.ilike(like)) |
-            (models.Job.location.ilike(like))
-        )
-    if q:
         terms = [t.strip() for t in q.split() if t.strip()]
         for term in terms:
             like = f"%{term}%"
@@ -37,7 +30,7 @@ def list_jobs(
                 or_(
                     models.Job.title.ilike(like),
                     models.Job.company.ilike(like),
-                    models.Job.company.ilike(like),
+                    models.Job.location.ilike(like),
                 )
             )
     if source:
@@ -59,3 +52,41 @@ def list_jobs(
             pass
     
     return query.offset(skip).limit(min(limit, 200)).all()
+
+@router.post("/collect/run")
+async def collect_now(db: Session = Depends(get_db)):
+    from adapters.hn import fetch_hn_jobs
+    from core.crud import upsert_job
+
+    # Step 1: fetch from API
+    try:
+        items = await fetch_hn_jobs()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"fetch_hn_jobs failed: {e}")
+    
+    if items is None:
+        raise HTTPException(status_code=500, detail="fetch_hn_jobs returned None")
+    
+
+    try:
+        count = 0
+        for item in items:
+            upsert_job(db, item)
+            count += 1
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"DB upsert failed: {e}")
+    
+    return {"inserted_or_updated": count}
+
+@router.get("/last_refresh")
+def last_refresh(db: Session = Depends(get_db)):
+    last_dt, total = db.query(
+        func.max(models.Job.fetched_at),
+        func.count(models.Job.id),
+    ).one()
+    return {
+        "last_refresh": last_dt.isoformat() if last_dt else None,
+        "total": int(total or 0),
+    }
