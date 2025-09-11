@@ -1,0 +1,10 @@
+2025-09-11 18:56:33,054 | INFO | job-aggregator | API starting...
+2025-09-11 18:56:33,060 | INFO | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-09-11 18:56:33,060 | INFO | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-09-11 18:56:33,061 | INFO | apscheduler.scheduler | Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-09-11 18:56:33,061 | INFO | apscheduler.scheduler | Added job "start_scheduler.<locals>.<lambda>" to job store "default"
+2025-09-11 18:56:33,061 | INFO | apscheduler.scheduler | Added job "start_scheduler.<locals>.<lambda>" to job store "default"
+2025-09-11 18:56:33,061 | INFO | apscheduler.scheduler | Added job "start_scheduler.<locals>.<lambda>" to job store "default"
+2025-09-11 18:56:33,061 | INFO | apscheduler.scheduler | Scheduler started
+2025-09-11 18:56:45,613 | INFO | httpx | HTTP Request: GET https://remotive.com/api/remote-jobs "HTTP/1.1 200 OK"
+2025-09-11 18:58:37,789 | INFO | httpx | HTTP Request: GET https://hn.algolia.com/api/v1/search_by_date?page=0 "HTTP/1.1 200 OK"

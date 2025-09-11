@@ -5,10 +5,13 @@ import { fetchJobs, getLastRefreach, collectNow } from "../api/jobs";
 import FiltersBar from "../components/FilterBar";
 import JobTable from "../components/JobTable";
 import LastRefresh from "../components/LastRefreash";
+import JobDetailsDialog from "../components/JobDetailsDialog";
 
 export default function JobsPage({ q }) {
     const [source, setSource] = useState("");
     const [status, setStatus] = useState("");
+    const [selected, setSelected] = useState(null);
+    const [open, setOpen] = useState(false);
     const qc = useQueryClient();
 
     const jobsQuery = useQuery({
@@ -41,41 +44,49 @@ export default function JobsPage({ q }) {
         refetchOnWindowFocus: false,
     });
 
+    const handleRowClick = (row) => {
+        setSelected(row);
+        setOpen(true);
+    };
+
     return (
-        <Container maxWidth="lg" sx={{ py: 3 }}>
-            <Stack gap={2}>
-                <Typography variant="h6">Jobs</Typography>
+            <Container maxWidth="lg" sx={{ py: 3 }}>
+                <Stack gap={2}>
+                    <Typography variant="h6">Jobs</Typography>
 
-                <LastRefresh
-                    last={lastQuery.data?.last_refresh}
-                    total={lastQuery.data?.total}
-                    loading={collectMutation.isPending}
-                    onCollect={() => collectMutation.mutate()}
-                />
+                    <LastRefresh
+                        last={lastQuery.data?.last_refresh}
+                        total={lastQuery.data?.total}
+                        loading={collectMutation.isPending}
+                        onCollect={() => collectMutation.mutate()}
+                    />
 
-                <FiltersBar
-                    source={source}
-                    status={status}
-                    onSource={setSource}
-                    onStatus={setStatus}
-                />
-                <JobTable
-                    jobs={data}
-                    isLoading={isLoading}
-                    isError={isError}
-                />
+                    <FiltersBar
+                        source={source}
+                        status={status}
+                        onSource={setSource}
+                        onStatus={setStatus}
+                    />
+                    <JobTable
+                        jobs={data}
+                        isLoading={isLoading}
+                        isError={isError}
+                        onRowClick={handleRowClick}
+                    />
 
-                <Snackbar
-                    open={!!toast}
-                    autoHideDuration={3000}
-                    onClose={() => setToast(null)}
-                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                >
-                    <Alert severity="info" variant="filled" onClose={() => setToast(null)}>
-                        {toast}
-                    </Alert>
-                </Snackbar>
-            </Stack>
-        </Container>
+                    <JobDetailsDialog open={open} onClose={() => setOpen(false)} job={selected} />
+
+                    <Snackbar
+                        open={!!toast}
+                        autoHideDuration={3000}
+                        onClose={() => setToast(null)}
+                        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    >
+                        <Alert severity="info" variant="filled" onClose={() => setToast(null)}>
+                            {toast}
+                        </Alert>
+                    </Snackbar>
+                </Stack>
+            </Container>
     );
 }

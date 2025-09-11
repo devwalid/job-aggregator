@@ -3,11 +3,15 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 from typing import List, Optional
 from datetime import datetime
+from core.logging import setup_logging
 
 from core.db import get_db
 from core import models, schemas
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
+logger = setup_logging()
+logger.info("API starting...")
+
 
 @router.get("/", response_model=List[schemas.JobSchema])
 def list_jobs(
@@ -79,6 +83,45 @@ async def collect_now(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"DB upsert failed: {e}")
     
     return {"inserted_or_updated": count}
+
+@router.post("/collect/all")
+async def collect_all(db: Session = Depends(get_db)):
+    from core.crud import upsert_job
+    from core.util import retry_async
+    from adapters.hn import fetch_hn_jobs
+
+    total = 0
+    for fn in (fetch_hn_jobs,):
+        items = await retry_async(fn, attempts=3, delay=1.0)
+        for it in items:
+            upsert_job(db, it)
+            total += 1
+        db.commit()
+        return {"inserted_or_updated": total}
+    
+@router.post("/collect/remotive")
+async def collect_remotive(db: Session = Depends(get_db)):
+    from adapters.remotive import fetch_remotive_jobs
+    from core.crud import upsert_job
+    from core.util import retry_async
+
+    try:
+        items = await retry_async(lambda: fetch_remotive_jobs(search=None), attempts=3, delay=1.0)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"fetch_remotive_jobs failed: {e}")
+    
+    try:
+        count = 0
+        for item in items:
+            upsert_job(db, item)
+            count += 1
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"DB upsert failed: {e}")
+    
+    return {"inserted_or_updated": count}
+
 
 @router.get("/last_refresh")
 def last_refresh(db: Session = Depends(get_db)):

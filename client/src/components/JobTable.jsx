@@ -3,7 +3,9 @@ import { DataGrid } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 import StatusChip from "./StatusChip";
 
-export default function JobTable({ jobs = [], isLoading = false, isError = false }) {
+
+export default function JobTable({ jobs = [], isLoading = false, isError = false, onRowClick}) {
+
     const columns = [
         { field: "title", headerName: "Title", flex: 1.4, minWidth: 200 },
         { field: "company", headerName: "Company", flex: 1, minWidth: 160 },
@@ -33,27 +35,32 @@ export default function JobTable({ jobs = [], isLoading = false, isError = false
     ];
 
     return (
-        <Card>
-            <CardContent>
-                <DataGrid
-                    rows={jobs}
-                    columns={columns}
-                    getRowId={(row) => row.id}
-                    autoHeight
-                    loading={isLoading}
-                    disableRowSelectionOnClick
-                    initialState={{
+        <>
+            <Card>
+                <CardContent>
+                    <DataGrid
+                        rows={jobs}
+                        columns={columns}
+                        getRowId={(row) => row.id || `${row.source}-${row.external_id}`}
+                        autoHeight
+                        loading={isLoading}
+                        disableRowSelectionOnClick
+                        onRowClick={(p) => onRowClick?.(p.row)}  
+                        initialState={{
                         pagination: { paginationModel: { page: 0, pageSize: 10 } },
                         sorting: { sortModel: [{ field: "posted_at", sort: "desc" }] },
-                    }}
-                    pageSizeOptions={[10, 25, 50]}
-                    sx={{
-                        "--DataGrid-containerbackground": "transparent",
+                        }}
+                        pageSizeOptions={[10, 25, 50]}
+                        sx={{
+                        "--DataGrid-containerBackground": "transparent",
                         "& .MuiDataGrid-columnHeaders": { bgcolor: "#fafafa" },
-                    }}
-                />
-                {isError && <Typography color="error" sx={{ mt: 1 }}>Failed to load jobs.</Typography>}
-            </CardContent>
-        </Card>
+                        }}
+                    />
+                    {isError && <Typography color="error" sx={{ mt: 1 }}>Failed to load jobs.</Typography>}
+                </CardContent>
+            </Card>
+
+            
+        </>
     );
 }
